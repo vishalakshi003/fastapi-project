@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+strawberry-graphql
+SQLAlchemy
+psycopg2-binary --only-binary psycopg2-binary
+PyJWT
+passlib
+requests
+alembic
