@@ -6,7 +6,7 @@ class Rolemaster(Base):
     __tablename__='role_master'
     id=Column(Integer,primary_key=True)
     name=Column(String,nullable=False)
-    role_mapping=relationship("Rolemapping",back_populates="role")
+    rolemapping=relationship("Rolemapping",back_populates="role")
 
 class Rolemapping(Base):
     __tablename__='role_mapping'

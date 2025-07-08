@@ -1,17 +1,28 @@
-from fastapi import HTTPException,status
-
+from graphql import GraphQLError
+class GraphQLHttpError(GraphQLError):
+    def __init__(self, message: str, status_code: int):
+        super().__init__(message=message, extensions={"status_code": status_code})
 class HttpError:
     @staticmethod
     def already_exists(details="Data already exists"):
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=details)
+        raise GraphQLHttpError(message=details, status_code=400)
     
+    @staticmethod
     def not_found(details="Data not found"):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=details)
-    def unauthorized(details="You are not authenticated to perform this action !"):
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail=details)
+        raise GraphQLHttpError(message=details, status_code=404)
+    
+    @staticmethod
+    def unauthorized(details="You are not authenticated to perform this action!"):
+        raise GraphQLHttpError(message=details, status_code=401)
+
+    @staticmethod
     def invalid_mobile_number(details="Invalid mobile number"):
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=details)
+        raise GraphQLHttpError(message=details, status_code=400)
+
+    @staticmethod
     def verify_password(details="Invalid password"):
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=details)
+        raise GraphQLHttpError(message=details, status_code=400)
+
+    @staticmethod
     def exception_handling(details="Something went wrong"):
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=details)
+        raise GraphQLHttpError(message=details, status_code=500)
