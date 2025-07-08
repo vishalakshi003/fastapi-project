@@ -9,39 +9,15 @@ from src.models.usermodel import *
 from sqlalchemy.orm import selectinload
 from src.schemas.role_schema import *
 from src.schemas.user_schema import *
+from src.services.role_service import *
+from src.services.user_services import *
 @strawberry.type
 class Query:
     @strawberry.field
     async def get_roles(self,info:Info,id:Optional[int]=None)-> List[RoleResponse]:
-        db: AsyncSession = info.context["db"]
-        if id:
-            results=await db.execute(select(Rolemaster).where(Rolemaster.id==id))
-        else:
-            results=await db .execute(select(Rolemaster))
-        roles=results.scalars().all()
-        if not roles:
-            raise HttpError.not_found()    
-        return roles
+        return await get_role(info,id)
     
     
     @strawberry.field
     async def get_user_details(self,info:Info,id:Optional[int]=None)->List[UserResponse]:
-        db:AsyncSession=info.context["db"]
-        if id:
-            results = await db.execute(select(CustomUser).options(selectinload(CustomUser.role_mapping)).where((CustomUser.id == id) & (CustomUser.is_active == True)))
-        
-        else:
-            results = await db.execute(select(CustomUser).options(selectinload(CustomUser.role_mapping)).where((CustomUser.is_active == True)))
-        users=results.scalars().all()
-        role_name=[]
-
-        for user in users:
-            role_name.append(user.role_mapping.name)
-    
-        return UserResponse(
-                id=user.id,
-                name=user.name,
-                email=user.email,
-                mobilenumber=user.mobile_number,
-                roles=", ".join(role_name) if role_name else "consumer"
-        )
+        return await get_users(info,id)

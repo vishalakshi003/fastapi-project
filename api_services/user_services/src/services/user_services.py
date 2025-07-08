@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy import and_, select
-import strawberry
-from strawberry.types import Info
+from sqlalchemy.orm import selectinload
 from src.schemas.role_schema import *
 from src.schemas.user_schema import *
 from src.models.rolemodel import *
@@ -41,24 +40,29 @@ async def create_user(info,data=UserInput)->UserResponse:
         await db.rollback()
         raise HttpError.exception_handling(f"Something went wrong :{str(e)}")
     
-
-async def create_role(info,data:Rolecreate)->RoleResponse:
-    try:
-        db:AsyncSession=info.context["db"]
-        results=await db.execute(select(Rolemaster).where(Rolemaster.name==data.name))
-        role_exists=results.scalar_one_or_none()
-        if role_exists:
-            raise HttpError.already_exists()
-
-        new_role=Rolemaster(name=data.name)
-        db.add(new_role)
-        await db.commit()
-        await db.refresh(new_role)
-        return new_role
-    except Exception as e:
-        await db.rollback()
-        raise HttpError.exception_handling(f"Something went wrong :{str(e)}") 
+async def get_users(info,id: Optional[int] = None)-> UserResponse:
+    db:AsyncSession=info.context["db"]
+    if id:
+        results = await db.execute(select(CustomUser).options(selectinload(CustomUser.role_mapping)).where((CustomUser.id == id) & (CustomUser.is_active == True)))
     
+    else:
+        results = await db.execute(select(CustomUser).options(selectinload(CustomUser.role_mapping)).where((CustomUser.is_active == True)))
+    users=results.scalars().all()
+    user_responses = []
+
+    for user in users:
+        user_responses.append(
+            UserResponse(
+                id=user.id,
+                name=user.name,
+                email=user.email,
+                mobile_number=user.mobile_number,
+            )
+        )
+
+    return user_responses
+
+
 async def user_map(info,data=RolemapInput):
     try:
         db:AsyncSession=info.context["db"]

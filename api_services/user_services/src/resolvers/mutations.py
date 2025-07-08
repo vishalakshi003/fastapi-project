@@ -2,7 +2,8 @@ import strawberry
 from strawberry.types import Info
 from ..schemas.role_schema import *
 from ..schemas.user_schema import *
-from src.services.user_services import create_user,create_role,user_map
+from src.services.user_services import create_user,user_map
+from src.services.role_service import create_role
 
 @strawberry.type
 class Mutation:
