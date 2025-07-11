@@ -11,7 +11,7 @@ from utils.function import *
 
 async def create_role(info,data:Rolecreate)->RoleResponse:
     try:
-        db:AsyncSession=info.context["db"]
+        db:AsyncSession=info.context.db
         results=await db.execute(select(Rolemaster).where(Rolemaster.name==data.name))
         role_exists=results.scalar_one_or_none()
         if role_exists:
@@ -27,7 +27,7 @@ async def create_role(info,data:Rolecreate)->RoleResponse:
         raise HttpError.exception_handling(f"Something went wrong :{str(e)}") 
     
 async def get_role(info,id:Optional[int] = None):
-    db: AsyncSession = info.context["db"]
+    db: AsyncSession = info.context.db
     if id:
         results=await db.execute(select(Rolemaster).where(Rolemaster.id==id))
     else:

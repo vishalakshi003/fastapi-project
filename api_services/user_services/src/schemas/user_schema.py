@@ -5,7 +5,10 @@ from src.config.database import create_session
 from src.models.usermodel import CustomUser
 from strawberry.scalars import JSON 
 
-
+@strawberry.type
+class SuccessResponse:
+    status:str
+    message:str
 
 
 @strawberry.input
@@ -64,5 +67,9 @@ class ChangepasswordInput:
     old_password:str
     password:str
     password1:str
-
+@strawberry.type
+class changepasswordResponse:
+    status:str
+    message:str
+    change_password:bool
 

@@ -21,8 +21,7 @@ class ForceGraphQLHTTPStatusMiddleware(BaseHTTPMiddleware):
                     status = extensions.get("status_code", 400)
                     response.status_code = status
 
-                    print('status-----------------------',status)
             except json.JSONDecodeError:
-                pass  # If response is not JSON, skip
+                pass  
 
         return response

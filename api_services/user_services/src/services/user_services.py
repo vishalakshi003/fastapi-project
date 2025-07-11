@@ -14,7 +14,7 @@ from shared.utils.jwt import generate_access_token
 
 async def create_user(info,data=UserInput)->UserResponse:
     try:
-        db:AsyncSession=info.context["db"]
+        db:AsyncSession=info.context.db
         exists_res=await db.execute(select(CustomUser).where(and_(CustomUser.email==data.email,CustomUser.mobile_number==data.mobile_number)))
         email_exists = exists_res.scalar_one_or_none()
         if email_exists:
@@ -42,7 +42,7 @@ async def create_user(info,data=UserInput)->UserResponse:
         raise HttpError.exception_handling(f"Something went wrong :{str(e)}")
     
 async def get_users(info,id: Optional[int] = None)-> UserResponse:
-    db:AsyncSession=info.context["db"]
+    db:AsyncSession=info.context.db
     if id:
         results = await db.execute(select(CustomUser).options(selectinload(CustomUser.role_mapping)).where((CustomUser.id == id) & (CustomUser.is_active == True)))
     
@@ -66,7 +66,7 @@ async def get_users(info,id: Optional[int] = None)-> UserResponse:
 
 async def create_profile(info,data:UserProfileInput)->UserprofileResponse:
     try:
-        db:AsyncSession=info.context["db"]
+        db:AsyncSession=info.context.db
         profile=UserPersonalProfile(user_id=data.user_id,firstname=data.firstname,lastname=data.lastname,profilephoto=data.profile_photo)
         db.add(profile)
         await db.commit()
@@ -83,14 +83,45 @@ async def create_profile(info,data:UserProfileInput)->UserprofileResponse:
 
 
 async def token(info,data:LoginRequest)->TokenResponse:
-    db:AsyncSession=info.context["db"]
-    user_res=(await db.execute(select(CustomUser).where(CustomUser.mobile_number==data.mobile_number))).scalar_one_or_none()
-    password_check= password_context.verify(data.password)
-    if not user_res and not password_check:
-        raise HttpError.not_found()
-    payload={
-        "id":user_res.id,
-        "email":user_res.email
-    }
-    generate_token=generate_access_token(payload)
-    return generate_token
+    try:
+        db:AsyncSession=info.context.db
+        user_res=(await db.execute(select(CustomUser).where(CustomUser.mobile_number==data.mobile_number))).scalar_one_or_none()
+        password_check= password_context.verify(data.password,user_res.password)
+        if not user_res and not password_check:
+            raise HttpError.not_found()
+        payload={
+            "id":user_res.id,
+            "email":user_res.email
+        }
+        generate_token=generate_access_token(payload)
+        return TokenResponse(token=generate_token)
+    except GraphQLHttpError as httpexe:
+        raise httpexe
+    except Exception as e:
+            HttpError.exception_handling()
+
+
+
+async def password_change(info,data:ChangepasswordInput)->changepasswordResponse:
+    try:
+        db:AsyncSession=info.context.db
+        user_data=info.context.user
+        if not user_data:
+            raise HttpError.unauthorized()
+        user_id=user_data["id"]
+        users=(await db.execute(select(CustomUser).where(CustomUser.id==user_id))).scalar_one_or_none()
+        if password_context.verify(data.old_password,users.password):
+            if (data.password)==(data.password1) and (data.old_password)!=(data.password):
+                users.password=password_context.hash(data.password)
+                await db.commit()
+            else:
+                raise HttpError.verify_password()
+        else:
+            raise HttpError.not_found()
+        return changepasswordResponse(
+            status='success',message='password change successfully',change_password=True
+        )
+    except GraphQLHttpError as httpexe:
+        raise httpexe
+    except Exception as e:
+        HttpError.exception_handling()
