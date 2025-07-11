@@ -7,5 +7,5 @@ class Config:
     def __init__(self):
         self.JWT_ALGORITHM=os.getenv("JWT_ALGORITHM")
         self.JWT_SECRET=os.getenv("JWT_SECRET")
-        self.TOKEN_EXPIRY=os.getenv("TOKEN_EXPIRY")
+        self.TOKEN_EXPIRY = int(os.getenv("TOKEN_EXPIRY", "1"))
 config=Config()

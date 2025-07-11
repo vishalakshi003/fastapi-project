@@ -3,7 +3,10 @@ import strawberry
 from typing import Optional,List,Any
 from src.config.database import create_session
 from src.models.usermodel import CustomUser
-from strawberry.scalars import JSON as StrawberryJSON
+from strawberry.scalars import JSON 
+
+
+
 
 @strawberry.input
 class UserInput:
@@ -31,7 +34,7 @@ class UserResponse:
             return None
         
 
-@strawberry.type
+@strawberry.input
 class LoginRequest:
     mobile_number:str
     password:str
@@ -46,11 +49,20 @@ class UserProfileInput:
     user_id:int
     firstname:str
     lastname:str
-    profile_photo:Optional[Any]=None
+    profile_photo:Optional[JSON]=None
 
 @strawberry.type
 class UserprofileResponse:
     user_id:int
     firstname:str
     lastname:str
-    profile_photo:Optional[Any]=None
+    profile_photo:Optional[JSON]=None
+
+
+@strawberry.input
+class ChangepasswordInput:
+    old_password:str
+    password:str
+    password1:str
+
+
