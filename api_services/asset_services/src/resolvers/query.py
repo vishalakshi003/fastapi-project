@@ -9,3 +9,6 @@ class Query:
     @strawberry.field
     async def get_assets(self,info:Info,id:Optional[int]=None)->List[GetAsset]:
         return await get_asset(info,id)
+    @strawberry.field
+    async def get_assetsallocated(self,info:Info,id:Optional[int]=None)->List[GetAssetAllocated]:
+        return await get_assetallocate(info,id)

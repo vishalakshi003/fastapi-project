@@ -1,5 +1,11 @@
 import strawberry
-
+from strawberry.federation import field as federated_field
+@strawberry.federation.type(keys=["id"], extend=True)
+class UserResponse:
+    id:strawberry.ID = federated_field(external=True)
+    @staticmethod
+    def resolver_reference(id:strawberry.ID)->"UserResponse":
+        return UserResponse(id=id)
 
 @strawberry.input
 class CreateAsset:
@@ -19,5 +25,5 @@ class CreateAssetAllocation:
 class GetAssetAllocated:
     id:int
     asset:GetAsset
-    userid:int
+    users:UserResponse
     

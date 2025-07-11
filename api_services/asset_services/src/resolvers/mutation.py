@@ -9,3 +9,7 @@ class Mutation:
     async def Create_asset(self,info:Info,data:CreateAsset)->GetAsset:
         return await create_asset(info,data)
     
+    @strawberry.mutation
+    async def Create_assetallocation(self,info:Info,data:CreateAssetAllocation)->GetAssetAllocated:
+        return await create_allocation(info,data)
+    

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.error.exception_handling import GraphQLHttpError, HttpError
 from utils.validate_phonenumber import *
 from utils.function import *
+from shared.utils.jwt import generate_access_token
 
 
 async def create_user(info,data=UserInput)->UserResponse:
@@ -63,23 +64,33 @@ async def get_users(info,id: Optional[int] = None)-> UserResponse:
     return user_responses
 
 
-async def user_map(info,data=RolemapInput):
+async def create_profile(info,data:UserProfileInput)->UserprofileResponse:
     try:
         db:AsyncSession=info.context["db"]
-
-        role_res=await db.execute(select(Rolemaster).where(Rolemaster.name.in_(data.rolename)))
-        roles=role_res.scalars()
-        if not roles:
-            raise HttpError.not_found()
-
-        for role in roles:
-            mapping= db.add(Rolemapping(user_id=data.user_id,role_id=role.id))
-
-        db.add(mapping)
-        db.commit()
-        db.refresh(mapping)
-        return mapping
-            
+        profile=UserPersonalProfile(user_id=data.user_id,firstname=data.firstname,lastname=data.lastname,profilephoto=data.profile_photo)
+        db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
+        return profile
+    
+    except GraphQLHttpError:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         raise HttpError.exception_handling(f"Something went wrong :{str(e)}")
+
+
+
+async def token(info,data:LoginRequest)->TokenResponse:
+    db:AsyncSession=info.context["db"]
+    user_res=(await db.execute(select(CustomUser).where(CustomUser.mobile_number==data.mobile_number))).scalar_one_or_none()
+    password_check= password_context.verify(data.password)
+    if not user_res and not password_check:
+        raise HttpError.not_found()
+    payload={
+        "id":user_res.id,
+        "email":user_res.email
+    }
+    generate_token=generate_access_token(payload)
+    return generate_token

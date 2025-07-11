@@ -36,3 +36,27 @@ async def get_role(info,id:Optional[int] = None):
     if not roles:
         raise HttpError.not_found()  
     return roles
+
+
+
+
+async def user_map(info,data=RolemapInput):
+    try:
+        db:AsyncSession=info.context["db"]
+
+        role_res=await db.execute(select(Rolemaster).where(Rolemaster.name.in_(data.rolename)))
+        roles=role_res.scalars()
+        if not roles:
+            raise HttpError.not_found()
+
+        for role in roles:
+            mapping= db.add(Rolemapping(user_id=data.user_id,role_id=role.id))
+
+        db.add(mapping)
+        db.commit()
+        db.refresh(mapping)
+        return mapping
+            
+    except Exception as e:
+        await db.rollback()
+        raise HttpError.exception_handling(f"Something went wrong :{str(e)}")
